@@ -35,6 +35,8 @@ public class GameManager : MonoBehaviour
 
     public int currentActionCost = 1;
 
+    public GameObject targetDisplay;
+
     void Start()
     {
         List<CharacterMainController> tempList = new List<CharacterMainController>();

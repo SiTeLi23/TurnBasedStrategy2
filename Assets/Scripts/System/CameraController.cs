@@ -18,6 +18,8 @@ public class CameraController : MonoBehaviour
             instance = this;
         }
         #endregion
+
+        moveTarget = transform.position;
     }
 
     public float moveSpeed, manualMoveSpeed = 5f;
