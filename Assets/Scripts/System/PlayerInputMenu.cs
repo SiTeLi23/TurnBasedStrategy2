@@ -21,17 +21,20 @@ public class PlayerInputMenu : MonoBehaviour
     }
 
 
-    public GameObject InputMenu, moveMenu, meleeMenu;
+    public GameObject InputMenu, moveMenu, meleeMenu, shootMenu;
     public TMP_Text turnPointText, errorText;
 
     public float errorDisplayTime = 2f;
     private float errorCounter;
+
+    public TMP_Text hitChanceText;
 
     public void HideMenu() 
     {
         InputMenu.SetActive(false);
         moveMenu.SetActive(false);
         meleeMenu.SetActive(false);
+        shootMenu.SetActive(false);
     }
 
     public void ShowInputMenu() 
@@ -88,6 +91,7 @@ public class PlayerInputMenu : MonoBehaviour
     {
         HideMenu();
         ShowInputMenu();
+
         GameManager.instance.targetDisplay.SetActive(false);
     }
 
@@ -101,6 +105,9 @@ public class PlayerInputMenu : MonoBehaviour
 
             GameManager.instance.targetDisplay.SetActive(true);
             GameManager.instance.targetDisplay.transform.position = GameManager.instance.activePlayer.meleeTargets[GameManager.instance.activePlayer.currentMeleeTarget].transform.position;
+
+            //look at target
+            GameManager.instance.activePlayer.LookAtTarget(GameManager.instance.activePlayer.meleeTargets[GameManager.instance.activePlayer.currentMeleeTarget].transform);
         }
         else 
         {
@@ -127,6 +134,110 @@ public class PlayerInputMenu : MonoBehaviour
             GameManager.instance.activePlayer.currentMeleeTarget = 0;
         }
         GameManager.instance.targetDisplay.transform.position = GameManager.instance.activePlayer.meleeTargets[GameManager.instance.activePlayer.currentMeleeTarget].transform.position;
+
+        //look at target
+        GameManager.instance.activePlayer.LookAtTarget(GameManager.instance.activePlayer.meleeTargets[GameManager.instance.activePlayer.currentMeleeTarget].transform);
+    }
+
+    #endregion
+
+
+    #region Shoot Action
+
+    public void ShowShootMenu()
+    {
+        HideMenu();
+        shootMenu.SetActive(true);
+
+        UpdateHitChance();
+    }
+
+    public void HideShootMenu()
+    {
+        HideMenu();
+        ShowInputMenu();
+
+        GameManager.instance.targetDisplay.SetActive(false);
+
+        CameraController.instance.SetMoveTarget(GameManager.instance.activePlayer.transform.position);
+    }
+
+    public void CheckShoot() 
+    {
+        GameManager.instance.activePlayer.GetShootTargets();
+
+        if(GameManager.instance.activePlayer.shootTargets.Count > 0) 
+        {
+            ShowShootMenu();
+
+            //handle selected indicator
+            GameManager.instance.targetDisplay.SetActive(true);
+            GameManager.instance.targetDisplay.transform.position = GameManager.instance.activePlayer.shootTargets[GameManager.instance.activePlayer.currentShootTarget].transform.position;
+
+            //look at target
+            GameManager.instance.activePlayer.LookAtTarget(GameManager.instance.activePlayer.shootTargets[GameManager.instance.activePlayer.currentShootTarget].transform);
+
+            //camera rotate to target
+            CameraController.instance.SetFireView();
+        }
+        else 
+        {
+            ShowErrorText("There is no enemy in shoot range");
+        }
+    }
+
+    public void NextShootTarget() 
+    {
+        GameManager.instance.activePlayer.currentShootTarget++;
+
+        if (GameManager.instance.activePlayer.currentShootTarget >= GameManager.instance.activePlayer.shootTargets.Count)
+        {
+            GameManager.instance.activePlayer.currentShootTarget = 0;
+        }
+
+        //handle selected indicator
+        GameManager.instance.targetDisplay.transform.position = GameManager.instance.activePlayer.shootTargets[GameManager.instance.activePlayer.currentShootTarget].transform.position;
+
+        UpdateHitChance();
+        
+        //look at target
+        GameManager.instance.activePlayer.LookAtTarget(GameManager.instance.activePlayer.shootTargets[GameManager.instance.activePlayer.currentShootTarget].transform);
+
+        //camera rotate to target
+        CameraController.instance.SetFireView();
+    }
+
+    public void FireShot() 
+    {
+        GameManager.instance.activePlayer.FireShot();
+
+        GameManager.instance.currentActionCost = 1;
+        HideMenu();
+
+        GameManager.instance.targetDisplay.SetActive(false);
+
+        StartCoroutine(WaitToEndActionCo(1f));
+    }
+
+    public void UpdateHitChance() 
+    {
+        float hitChance = Random.Range(50f, 95f);
+
+        hitChanceText.text = "Chance To Hit: " + GameManager.instance.activePlayer.CheckShotChance().ToString("F1") + "%";
+        
+    }
+
+
+
+    #endregion
+
+
+    #region Defending Action
+
+    public void Defend() 
+    {
+        GameManager.instance.activePlayer.SetDefending(true);
+        GameManager.instance.EndTurn();
     }
 
     #endregion
@@ -148,6 +259,9 @@ public class PlayerInputMenu : MonoBehaviour
         yield return new WaitForSeconds(timeToWait);
 
         GameManager.instance.SpendTurnPoints();
+
+        //set back to normal camera view
+        CameraController.instance.SetMoveTarget(GameManager.instance.activePlayer.transform.position);
     }
 
     public void ShowErrorText(string messageToShow) 

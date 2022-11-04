@@ -29,11 +29,17 @@ public class CameraController : MonoBehaviour
 
     private float targetRot;
     public float rotateSpeed;
-    private int currentAngle; //snapping angle unit
+    private int currentAngle; //rotation snapping angle unit
+
+    public Transform theCam;
+
+    public float fireCamViewAngle = 30f;
+    private float targetCamViewAngle;
+    private bool isFireView;
 
     void Start()
     {
-        
+        targetCamViewAngle = 45f;
     }
 
     
@@ -84,15 +90,38 @@ public class CameraController : MonoBehaviour
             }
         }
 
-        targetRot = (90f * currentAngle) + 45f; //45f is the start rotation of the camera, current angle  can not bigger than 4(4X90 = 360 degree)
+        if (isFireView == false)
+        {
+            targetRot = (90f * currentAngle) + 45f; //45f is the start rotation of the camera, current angle  can not bigger than 4(4X90 = 360 degree)
+        }
+        
+        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0f, targetRot, 0f), rotateSpeed * Time.deltaTime);
 
-        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.Euler(0f,targetRot,0f), rotateSpeed*Time.deltaTime);
-
+        //raise up rotation toward the selected target if in shoot mode
+        theCam.localRotation = Quaternion.Slerp(theCam.localRotation, Quaternion.Euler(targetCamViewAngle, 0f, 0f), rotateSpeed * Time.deltaTime);
+            
         #endregion
     }
 
     public void SetMoveTarget(Vector3 newTarget) 
     {
         moveTarget = newTarget;
+
+        //return to a normal view
+        targetCamViewAngle = 45f;
+        isFireView = false;
+    }
+
+    public void SetFireView() 
+    {
+        //whenever we start to shoot, move camera to the current selected unit
+        moveTarget = GameManager.instance.activePlayer.transform.position;
+
+        //move camera toward current selected target
+        targetRot = GameManager.instance.activePlayer.transform.eulerAngles.y;
+
+        targetCamViewAngle = fireCamViewAngle;
+
+        isFireView = true;
     }
 }
