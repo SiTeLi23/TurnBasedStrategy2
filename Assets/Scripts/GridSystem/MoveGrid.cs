@@ -93,8 +93,9 @@ public class MoveGrid : MonoBehaviour
             {
                 mp.gameObject.SetActive(true);
 
+                //find the current point which already has a unit standing there
                 //disactive characer's current standing moving points.
-                foreach(CharacterMainController cc in GameManager.instance.allChars) 
+                foreach (CharacterMainController cc in GameManager.instance.allChars) 
                 {
                    if(Vector3.Distance(cc.transform.position, mp.transform.position) < .5f) 
                     {
@@ -103,5 +104,36 @@ public class MoveGrid : MonoBehaviour
                 }
             }
         }
+    }
+
+    //get all the moveable list
+    public List<MovePoint> GetMovePointsInRange(float moveRange, Vector3 centerPoint) 
+    {
+        List<MovePoint> foundPoints = new List<MovePoint>();
+
+        foreach (MovePoint mp in allMovePoints)
+        {
+            if (Vector3.Distance(centerPoint, mp.transform.position) <= moveRange)
+            {
+                bool shouldAdd = true;
+
+                //find the current point which already has a unit standing there
+                foreach (CharacterMainController cc in GameManager.instance.allChars)
+                {
+                    if (Vector3.Distance(cc.transform.position, mp.transform.position) < .5f)
+                    {
+                        shouldAdd = false;
+                    }
+                }
+
+                if(shouldAdd == true) 
+                {
+                    foundPoints.Add(mp);
+                }
+            }
+        }
+
+
+        return foundPoints;
     }
 }

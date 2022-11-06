@@ -49,13 +49,19 @@ public class CharacterMainController : MonoBehaviour
     public GameObject defendObject;
     public bool isDefending;
 
-    void Start()
+    public Animator anim;
+
+    private void Awake()
     {
         moveTarget = transform.position;
 
         navAgent.speed = moveSpeed;
 
         currentHealth = maxHealth;
+    }
+    void Start()
+    {
+
         UpdateHealthDisplay();
 
         shootLine.transform.position = Vector3.zero;
@@ -78,6 +84,8 @@ public class CharacterMainController : MonoBehaviour
                 {
                     isMoving = false;
                     GameManager.instance.FinishMovement();
+
+                    anim.SetBool("isWalking", false);
                 }
             }
         }
@@ -100,6 +108,8 @@ public class CharacterMainController : MonoBehaviour
 
         navAgent.SetDestination(moveTarget);
         isMoving = true;
+
+        anim.SetBool("isWalking", true);
     }
 
     //get melee target
@@ -139,6 +149,10 @@ public class CharacterMainController : MonoBehaviour
     public void DoMelee() 
     {
         meleeTargets[currentMeleeTarget].TakeDamage(meleeDamage);
+
+        anim.SetTrigger("doMelee");
+
+        SFXManager.instance.meleeHit.Play();
     }
 
     public void TakeDamage(float damageToTake) 
@@ -156,7 +170,7 @@ public class CharacterMainController : MonoBehaviour
 
             navAgent.enabled = false;
 
-            transform.rotation = Quaternion.Euler(-70f, transform.rotation.eulerAngles.y, 0f);
+            //transform.rotation = Quaternion.Euler(-70f, transform.rotation.eulerAngles.y, 0f);
 
             GameManager.instance.allChars.Remove(this);
             if (GameManager.instance.playerTeam.Contains(this)) 
@@ -168,6 +182,23 @@ public class CharacterMainController : MonoBehaviour
                 GameManager.instance.enemyTeam.Remove(this);
             }
 
+            anim.SetTrigger("die");
+
+            if(isEnemy == false) 
+            {
+                SFXManager.instance.deathHuman.Play();
+            }
+            else 
+            {
+                SFXManager.instance.deathRobot.Play();
+            }
+            GetComponent<Collider>().enabled = false;
+        }
+        else 
+        {
+            anim.SetTrigger("takeHit");
+
+            SFXManager.instance.takeDamage.Play();
         }
 
         UpdateHealthDisplay();
@@ -254,9 +285,9 @@ public class CharacterMainController : MonoBehaviour
 
             shootLine.SetPosition(0,shootPoint.position);
             shootLine.SetPosition(1, hit.point);
+
+            SFXManager.instance.impact.Play();
         }        
-
-
 
         //if we don't hit anything
         else 
@@ -269,6 +300,8 @@ public class CharacterMainController : MonoBehaviour
 
         shootLine.gameObject.SetActive(true);
         shotRemainCounter = shotRemainTime;
+
+        SFXManager.instance.PlayShoot();
 
     }
 
